@@ -1,0 +1,67 @@
+name: Veille stages
+
+on:
+  schedule:
+    # Toutes les 30 minutes (GitHub peut décaler de quelques minutes)
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+    inputs:
+      essai:
+        description: "Essai à blanc (n'écrit rien, n'envoie rien)"
+        type: boolean
+        default: false
+      source:
+        description: "Ne lancer qu'une source (ex. Citi, LinkedIn) — laisser vide pour tout"
+        required: false
+        default: ""
+      forcer:
+        description: "Ignorer les intervalles entre collectes"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write   # pour garder la tâche planifiée active (voir dernière étape)
+
+concurrency:
+  group: veille
+  cancel-in-progress: false
+
+jobs:
+  veille:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Lancer la veille
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CV_TEXT: ${{ secrets.CV_TEXT }}
+          ESSAI: ${{ inputs.essai }}
+          SOURCE: ${{ inputs.source }}
+          FORCER: ${{ inputs.forcer }}
+        run: |
+          ARGS=()
+          if [ "$ESSAI" = "true" ]; then ARGS+=(--dry-run); fi
+          if [ -n "$SOURCE" ]; then ARGS+=(--source "$SOURCE"); fi
+          if [ "$FORCER" = "true" ]; then ARGS+=(--force); fi
+          python -m engine.main "${ARGS[@]}"
+
+      - name: Garder la tâche planifiée active
+        # GitHub suspend les tâches planifiées d'un dépôt public après 60 jours sans activité.
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/veille.yml/enable" || true
