@@ -1,0 +1,241 @@
+# =====================================================================
+#  CONFIGURATION DE LA VEILLE DE STAGES
+#  Tu peux modifier ce fichier directement sur GitHub (icône crayon).
+#  Règles : garder l'indentation (2 espaces), pas de tabulation.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. TA RECHERCHE
+# ---------------------------------------------------------------------
+recherche:
+  # Postes recherchés (valeurs possibles : Sales, Trading, Structuring,
+  # Risk, Middle Office, Markets (général), Quant/Research)
+  postes_voulus: [Sales, Trading, Structuring, Risk, Middle Office, "Markets (général)"]
+
+  # Période de disponibilité : le stage doit tenir entre ces deux dates
+  disponible_du: "2027-05-01"
+  disponible_au: "2027-12-31"
+  duree_mois: 6
+
+  # Villes ciblées (les variantes sont reconnues : La Défense -> Paris, etc.)
+  villes: [Paris, Lyon, Lille, Montréal, Toronto, Londres, New York, Chicago,
+           Milan, Zurich, Genève, Luxembourg, Amsterdam]
+
+  # Garder aussi les offres d'entreprises absentes de ta liste,
+  # si l'intitulé est clairement un poste de marchés (ex. CACEIS, Amundi...)
+  inclure_autres_entreprises: true
+
+  # Exclure les contrats qui ne sont pas des stages
+  exclure_mots: [alternance, apprentissage, apprenti, apprentice, "v.i.e", " vie ",
+                 graduate programme, graduate program, cdi, "working student",
+                 werkstudent, "part-time", "temps partiel", "summer associate"]
+
+# ---------------------------------------------------------------------
+# 2. NOTIFICATIONS (ntfy)
+#    Le nom du sujet ntfy est stocké dans les "Secrets" GitHub (NTFY_TOPIC),
+#    jamais ici, car ce fichier peut être public.
+# ---------------------------------------------------------------------
+notifications:
+  actif: true
+  serveur: "https://ntfy.sh"
+  # Notifier aussi les offres dont la période semble incompatible ?
+  notifier_periode_incompatible: false
+  # Au-delà de ce nombre d'offres dans un même passage, une notification
+  # récapitulative est envoyée au lieu d'une par offre
+  max_notifications_par_passage: 8
+  # Adresse de ton dashboard (pour le lien dans les notifications récapitulatives)
+  url_dashboard: ""
+
+# ---------------------------------------------------------------------
+# 3. DÉDOUBLONNAGE
+# ---------------------------------------------------------------------
+dedoublonnage:
+  # Similarité minimale des intitulés (0-100) pour considérer 2 offres identiques
+  seuil_similarite_titre: 86
+  # Une offre réapparue après N jours d'absence = "repost tardif" (désistement)
+  jours_absence_repost: 14
+  # En dessous de ce taux de similarité des descriptions = "mise à jour importante"
+  seuil_changement_description: 0.70
+  # Une offre non revue depuis N jours est considérée comme expirée
+  jours_avant_expiration: 10
+
+# ---------------------------------------------------------------------
+# 4. ANALYSE DE COMPATIBILITÉ CV (module IA, désactivé pour l'instant)
+#    Pour l'activer : voir le guide, section "Activer l'analyse IA".
+# ---------------------------------------------------------------------
+analyse_ia:
+  actif: false
+  modele: "claude-haiku-5-5"
+  # N'analyser que les offres pertinentes (poste + ville + période OK)
+  seulement_offres_pertinentes: true
+  max_analyses_par_passage: 25
+
+# ---------------------------------------------------------------------
+# 5. SOURCES
+#    "toutes_les_minutes" : intervalle minimal entre 2 collectes d'une source.
+# ---------------------------------------------------------------------
+sources:
+  workday:
+    actif: true
+    toutes_les_minutes: 30
+    # Recherches envoyées à chaque site (les résultats sont ensuite filtrés par l'outil)
+    recherches: ["markets intern", "sales trading intern", "off-cycle internship", "risk intern",
+                 "middle office intern", "trading internship", "stage", "stagiaire"]
+    sites:
+      - {entreprise: "Citi (Citigroup)", url: "https://citi.wd5.myworkdayjobs.com/2"}
+      - {entreprise: "Morgan Stanley", url: "https://ms.wd5.myworkdayjobs.com/External"}
+      - {entreprise: "Wells Fargo", url: "https://wf.wd1.myworkdayjobs.com/WellsFargoJobs"}
+      - {entreprise: "State Street", url: "https://statestreet.wd1.myworkdayjobs.com/Global"}
+      - {entreprise: "BMO Capital Markets", url: "https://bmo.wd3.myworkdayjobs.com/External"}
+      - {entreprise: "TD Securities (incl. Cowen)", url: "https://td.wd3.myworkdayjobs.com/TD_Bank_Careers"}
+      - {entreprise: "Santander CIB", url: "https://santander.wd3.myworkdayjobs.com/SantanderCareers"}
+      - {entreprise: "RBC Capital Markets", url: "https://rbc.wd3.myworkdayjobs.com/RBCGLOBAL1"}
+      - {entreprise: "MUFG", url: "https://mufgub.wd3.myworkdayjobs.com/MUFG-Careers"}
+      - {entreprise: "Mizuho", url: "https://mizuho.wd1.myworkdayjobs.com/mizuhoamericas"}
+      - {entreprise: "Millennium", url: "https://mlp.wd5.myworkdayjobs.com/mlpcareers"}
+
+  oracle:
+    actif: true
+    toutes_les_minutes: 30
+    recherches: ["off-cycle", "internship", "markets internship", "stage"]
+    sites:
+      - {entreprise: "J.P. Morgan", hote: "https://jpmc.fa.oraclecloud.com", site: "CX_1001"}
+
+  greenhouse:
+    actif: true
+    toutes_les_minutes: 60
+    tableaux:
+      - {entreprise: "Jane Street", jeton: "janestreet"}
+      - {entreprise: "IMC", jeton: "imc"}
+      - {entreprise: "DRW", jeton: "drweng"}
+      - {entreprise: "Jump Trading", jeton: "jumptrading"}
+      - {entreprise: "Hudson River Trading (HRT)", jeton: "wehrtyou"}
+      - {entreprise: "Tower Research Capital", jeton: "towerresearchcapital"}
+      - {entreprise: "XTX Markets", jeton: "xtxmarketstechnologies"}
+      - {entreprise: "Qube Research & Technologies (QRT)", jeton: "quberesearchandtechnologies"}
+      - {entreprise: "Point72", jeton: "point72"}
+      - {entreprise: "AQR", jeton: "aqr"}
+      - {entreprise: "Flow Traders", jeton: "flowtraders"}
+      - {entreprise: "GSA Capital", jeton: "gsacapital"}
+      - {entreprise: "Marshall Wace", jeton: "marshallwace"}
+
+  smartrecruiters:
+    actif: true
+    toutes_les_minutes: 60
+    entreprises:
+      - {entreprise: "Vitol", identifiant: "vitol"}
+      - {entreprise: "TP ICAP", identifiant: "tpicap"}
+      - {entreprise: "Tradition (Comp. Financière Tradition)", identifiant: "tradition"}
+
+  bnp:
+    actif: true
+    toutes_les_minutes: 30
+    # Filtres du site BNP : type 28 = Stage ; entité 94 = CIB ; 96 = Asset Management
+    url: "https://group.bnpparibas/emploi-carriere/toutes-offres-emploi?form%5Btype%5D%5B%5D=28&form%5Brh_entity%5D%5B%5D=94"
+    pages_max: 12
+
+  linkedin:
+    # Recherche d'offres publique de LinkedIn (sans compte). Couvre toutes les
+    # entreprises de la liste, y compris celles sans connecteur direct.
+    actif: true
+    toutes_les_minutes: 90
+    recherches: ["stage sales trading", "stage marchés financiers", "stage risques de marché",
+                 "stage middle office", "off-cycle internship markets",
+                 "sales trading internship", "markets internship", "risk internship"]
+    lieux: ["Paris, Île-de-France, France", "Lyon, Auvergne-Rhône-Alpes, France",
+            "Lille, Hauts-de-France, France", "Montreal, Quebec, Canada", "Toronto, Ontario, Canada",
+            "London, England, United Kingdom", "New York, United States", "Chicago, Illinois, United States",
+            "Milan, Lombardy, Italy", "Zurich, Switzerland", "Geneva, Switzerland",
+            "Luxembourg", "Amsterdam, North Holland, Netherlands"]
+    # Recherches complètes sur Paris, recherches réduites (2 premières) ailleurs
+    recherches_hors_paris: 3
+    pages_par_recherche: 2
+    pause_secondes: 2.5
+
+# ---------------------------------------------------------------------
+# 6. ENTREPRISES SUIVIES (issues de ton fichier Excel)
+#    alias = noms tels qu'ils apparaissent sur LinkedIn / les sites d'offres
+# ---------------------------------------------------------------------
+entreprises:
+  - {nom: "BNP Paribas CIB", categorie: "Banques Françaises", alias: ["bnp paribas"]}
+  - {nom: "Société Générale CIB", categorie: "Banques Françaises", alias: ["societe generale", "société générale", "sgcib", "sg cib", "lyxor"]}
+  - {nom: "Crédit Agricole CIB (CACIB)", categorie: "Banques Françaises", alias: ["credit agricole cib", "crédit agricole cib", "credit agricole corporate", "crédit agricole corporate", "cacib", "ca-cib"]}
+  - {nom: "Natixis CIB", categorie: "Banques Françaises", alias: ["natixis"]}
+  - {nom: "HSBC Continental Europe", categorie: "Banques Françaises", alias: ["hsbc"]}
+  - {nom: "CIC Market Solutions", categorie: "Banques Françaises", alias: ["cic market solutions", "cic marchés", "credit industriel et commercial", "crédit industriel et commercial", "cic"]}
+  - {nom: "ODDO BHF", categorie: "Banques Françaises", alias: ["oddo bhf", "oddo"]}
+  - {nom: "Kepler Cheuvreux", categorie: "Banques Françaises", alias: ["kepler cheuvreux"]}
+  - {nom: "Exane", categorie: "Banques Françaises", alias: ["exane"]}
+  - {nom: "Goldman Sachs", categorie: "Banques Américaines", alias: ["goldman sachs"]}
+  - {nom: "J.P. Morgan", categorie: "Banques Américaines", alias: ["j.p. morgan", "jp morgan", "jpmorgan", "jpmorganchase", "jpmorgan chase"]}
+  - {nom: "Morgan Stanley", categorie: "Banques Américaines", alias: ["morgan stanley"]}
+  - {nom: "Bank of America (BofA)", categorie: "Banques Américaines", alias: ["bank of america", "bofa securities", "bofa"]}
+  - {nom: "Citi (Citigroup)", categorie: "Banques Américaines", alias: ["citi", "citigroup", "citibank"]}
+  - {nom: "Jefferies", categorie: "Banques Américaines", alias: ["jefferies"]}
+  - {nom: "Wells Fargo", categorie: "Banques Américaines", alias: ["wells fargo"]}
+  - {nom: "State Street", categorie: "Banques Américaines", alias: ["state street"]}
+  - {nom: "BNY Mellon", categorie: "Banques Américaines", alias: ["bny mellon", "bny", "bank of new york"]}
+  - {nom: "Cantor Fitzgerald", categorie: "Banques Américaines", alias: ["cantor fitzgerald", "cantor"]}
+  - {nom: "Stifel", categorie: "Banques Américaines", alias: ["stifel"]}
+  - {nom: "Baird", categorie: "Banques Américaines", alias: ["baird", "robert w. baird"]}
+  - {nom: "Barclays CIB", categorie: "Banques Européennes", alias: ["barclays"]}
+  - {nom: "UBS", categorie: "Banques Européennes", alias: ["ubs"]}
+  - {nom: "Deutsche Bank", categorie: "Banques Européennes", alias: ["deutsche bank"]}
+  - {nom: "Santander CIB", categorie: "Banques Européennes", alias: ["santander"]}
+  - {nom: "BBVA", categorie: "Banques Européennes", alias: ["bbva"]}
+  - {nom: "Intesa Sanpaolo", categorie: "Banques Européennes", alias: ["intesa sanpaolo", "intesa"]}
+  - {nom: "UniCredit", categorie: "Banques Européennes", alias: ["unicredit"]}
+  - {nom: "ING", categorie: "Banques Européennes", alias: ["ing", "ing bank", "ing group"]}
+  - {nom: "ABN AMRO", categorie: "Banques Européennes", alias: ["abn amro"]}
+  - {nom: "Nordea", categorie: "Banques Européennes", alias: ["nordea"]}
+  - {nom: "SEB", categorie: "Banques Européennes", alias: ["seb", "skandinaviska enskilda"]}
+  - {nom: "Danske Bank", categorie: "Banques Européennes", alias: ["danske bank"]}
+  - {nom: "Commerzbank", categorie: "Banques Européennes", alias: ["commerzbank"]}
+  - {nom: "DZ Bank", categorie: "Banques Européennes", alias: ["dz bank"]}
+  - {nom: "Rabobank", categorie: "Banques Européennes", alias: ["rabobank"]}
+  - {nom: "KBC", categorie: "Banques Européennes", alias: ["kbc"]}
+  - {nom: "RBC Capital Markets", categorie: "Globales & Autres", alias: ["rbc", "royal bank of canada"]}
+  - {nom: "TD Securities (incl. Cowen)", categorie: "Globales & Autres", alias: ["td securities", "td bank", "td cowen", "td"]}
+  - {nom: "Macquarie Group", categorie: "Globales & Autres", alias: ["macquarie"]}
+  - {nom: "Nomura", categorie: "Globales & Autres", alias: ["nomura"]}
+  - {nom: "MUFG", categorie: "Globales & Autres", alias: ["mufg", "mitsubishi ufj"]}
+  - {nom: "SMBC", categorie: "Globales & Autres", alias: ["smbc", "sumitomo mitsui"]}
+  - {nom: "Mizuho", categorie: "Globales & Autres", alias: ["mizuho"]}
+  - {nom: "BMO Capital Markets", categorie: "Globales & Autres", alias: ["bmo", "bank of montreal"]}
+  - {nom: "Standard Chartered", categorie: "Globales & Autres", alias: ["standard chartered"]}
+  - {nom: "Citadel Securities", categorie: "Prop Trading & Quants", alias: ["citadel securities", "citadel"]}
+  - {nom: "Jane Street", categorie: "Prop Trading & Quants", alias: ["jane street"]}
+  - {nom: "Optiver", categorie: "Prop Trading & Quants", alias: ["optiver"]}
+  - {nom: "Flow Traders", categorie: "Prop Trading & Quants", alias: ["flow traders"]}
+  - {nom: "IMC", categorie: "Prop Trading & Quants", alias: ["imc trading", "imc"]}
+  - {nom: "Jump Trading", categorie: "Prop Trading & Quants", alias: ["jump trading"]}
+  - {nom: "Maven Securities", categorie: "Prop Trading & Quants", alias: ["maven securities"]}
+  - {nom: "DRW", categorie: "Prop Trading & Quants", alias: ["drw"]}
+  - {nom: "SIG", categorie: "Prop Trading & Quants", alias: ["susquehanna", "sig"]}
+  - {nom: "XTX Markets", categorie: "Prop Trading & Quants", alias: ["xtx markets", "xtx"]}
+  - {nom: "Hudson River Trading (HRT)", categorie: "Prop Trading & Quants", alias: ["hudson river trading", "hrt"]}
+  - {nom: "Tower Research Capital", categorie: "Prop Trading & Quants", alias: ["tower research"]}
+  - {nom: "Qube Research & Technologies (QRT)", categorie: "Prop Trading & Quants", alias: ["qube research", "qrt"]}
+  - {nom: "Millennium", categorie: "Prop Trading & Quants", alias: ["millennium management", "millennium"]}
+  - {nom: "Point72", categorie: "Prop Trading & Quants", alias: ["point72"]}
+  - {nom: "Balyasny", categorie: "Prop Trading & Quants", alias: ["balyasny"]}
+  - {nom: "Two Sigma", categorie: "Prop Trading & Quants", alias: ["two sigma"]}
+  - {nom: "D.E. Shaw", categorie: "Prop Trading & Quants", alias: ["d. e. shaw", "d.e. shaw", "de shaw"]}
+  - {nom: "AQR", categorie: "Prop Trading & Quants", alias: ["aqr"]}
+  - {nom: "GSA Capital", categorie: "Prop Trading & Quants", alias: ["gsa capital"]}
+  - {nom: "Marshall Wace", categorie: "Prop Trading & Quants", alias: ["marshall wace"]}
+  - {nom: "TotalEnergies Trading (TOTSSA)", categorie: "Commodities & Energy", alias: ["totalenergies trading", "totsa", "totalenergies"]}
+  - {nom: "Shell Energy", categorie: "Commodities & Energy", alias: ["shell"]}
+  - {nom: "BP Supply & Trading", categorie: "Commodities & Energy", alias: ["bp"]}
+  - {nom: "Trafigura", categorie: "Commodities & Energy", alias: ["trafigura"]}
+  - {nom: "Vitol", categorie: "Commodities & Energy", alias: ["vitol"]}
+  - {nom: "Gunvor", categorie: "Commodities & Energy", alias: ["gunvor"]}
+  - {nom: "Mercuria", categorie: "Commodities & Energy", alias: ["mercuria"]}
+  - {nom: "Glencore", categorie: "Commodities & Energy", alias: ["glencore"]}
+  - {nom: "Cargill", categorie: "Commodities & Energy", alias: ["cargill"]}
+  - {nom: "Engie Global Markets", categorie: "Commodities & Energy", alias: ["engie global markets", "engie"]}
+  - {nom: "EDF Trading", categorie: "Commodities & Energy", alias: ["edf trading", "edf"]}
+  - {nom: "RWE Supply & Trading", categorie: "Commodities & Energy", alias: ["rwe"]}
+  - {nom: "TP ICAP", categorie: "Interdealer Brokers", alias: ["tp icap", "tpicap"]}
+  - {nom: "BGC Group", categorie: "Interdealer Brokers", alias: ["bgc group", "bgc partners", "bgc"]}
+  - {nom: "Tradition (Comp. Financière Tradition)", categorie: "Interdealer Brokers", alias: ["tradition", "compagnie financiere tradition"]}

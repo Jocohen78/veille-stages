@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121211">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Veille stages">
+<title>Veille Stages</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M7 21l5-6 4 3 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3ef;
+  --surface: #fcfcfb;
+  --surface-2: #f0efeb;
+  --border: #e2e0da;
+  --border-strong: #cfccc4;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #85847e;
+  --accent: #2a78d6;
+  --accent-soft: #e3eefb;
+  --accent-text: #1c5cab;
+  --good: #0a7d0a;  --good-soft: #e1f3e1;
+  --warn: #9a6300;  --warn-soft: #fbf0d6;
+  --bad: #c03030;   --bad-soft: #fbe4e4;
+  --violet: #4a3aa7; --violet-soft: #ebe8f8;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a;
+  --grid: #e9e7e1;
+  --shadow: 0 1px 2px rgba(20,20,15,.06), 0 4px 16px rgba(20,20,15,.06);
+  --radius: 10px;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2e2e2b; --border-strong: #42423e;
+    --text: #ffffff; --text-2: #c3c2b7; --text-3: #8e8d85;
+    --accent: #3987e5; --accent-soft: #1b2a3d; --accent-text: #86b6ef;
+    --good: #4cc44c; --good-soft: #17301a; --warn: #f0b43a; --warn-soft: #3a2e12; --bad: #ec6d6d; --bad-soft: #3c1c1c;
+    --violet: #9085e9; --violet-soft: #26223f;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --grid: #2a2a27;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2e2e2b; --border-strong: #42423e;
+  --text: #ffffff; --text-2: #c3c2b7; --text-3: #8e8d85;
+  --accent: #3987e5; --accent-soft: #1b2a3d; --accent-text: #86b6ef;
+  --good: #4cc44c; --good-soft: #17301a; --warn: #f0b43a; --warn-soft: #3a2e12; --bad: #ec6d6d; --bad-soft: #3c1c1c;
+  --violet: #9085e9; --violet-soft: #26223f;
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --grid: #2a2a27;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.hidden { display: none !important; }
+
+/* ------------------------------------------------------------ en-tête */
+header.top {
+  position: sticky; top: 0; z-index: 30;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.top-inner { max-width: 1480px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.brand .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; }
+.brand small { font-weight: 500; color: var(--text-3); }
+nav.tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 9px; }
+nav.tabs button {
+  border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; color: var(--text-2);
+  font-weight: 500; white-space: nowrap; display: flex; gap: 6px; align-items: center;
+}
+nav.tabs button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+nav.tabs .count { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.top-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn {
+  border: 1px solid var(--border-strong); background: var(--surface); padding: 6px 12px; border-radius: 8px;
+  cursor: pointer; font-weight: 500; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap;
+}
+.btn:hover { border-color: var(--text-3); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.icon { padding: 6px 8px; }
+.btn svg { width: 16px; height: 16px; }
+.demo-pill { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); padding: 2px 8px; border-radius: 99px; }
+
+main { max-width: 1480px; margin: 0 auto; padding: 18px 20px 60px; }
+
+/* ------------------------------------------------------------ filtres */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.search {
+  flex: 1 1 260px; max-width: 360px; display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 10px;
+}
+.search input { border: 0; outline: 0; background: transparent; padding: 7px 0; width: 100%; }
+.search svg { width: 15px; height: 15px; color: var(--text-3); flex: none; }
+.ms { position: relative; }
+.ms > button {
+  border: 1px solid var(--border-strong); background: var(--surface); border-radius: 8px; padding: 6px 10px;
+  cursor: pointer; display: inline-flex; gap: 6px; align-items: center; color: var(--text-2); white-space: nowrap;
+}
+.ms > button.active { border-color: var(--accent); color: var(--accent-text); background: var(--accent-soft); }
+.ms > button .n { font-weight: 700; }
+.ms > button svg { width: 12px; height: 12px; }
+.ms-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 240px; max-width: 320px; max-height: 340px;
+  overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 6px;
+}
+.ms-pop input[type=text] { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; background: var(--bg); margin-bottom: 4px; }
+.ms-pop label { display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
+.ms-pop label:hover { background: var(--surface-2); }
+.ms-pop label .c { margin-left: auto; color: var(--text-3); font-size: 12px; }
+.ms-pop .ms-foot { display: flex; justify-content: space-between; padding: 6px 4px 2px; border-top: 1px solid var(--border); margin-top: 4px; }
+.ms-pop .ms-foot button { border: 0; background: none; color: var(--accent-text); cursor: pointer; padding: 2px 4px; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--text-2); cursor: pointer; padding: 6px 4px; white-space: nowrap; }
+.toggle input { accent-color: var(--accent); }
+.daterange { display: inline-flex; gap: 4px; align-items: center; color: var(--text-2); }
+.daterange select, .daterange input { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 8px; padding: 5px 6px; }
+.subbar { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 10px; color: var(--text-3); font-size: 13px; gap: 10px; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip-f { background: var(--accent-soft); color: var(--accent-text); border-radius: 99px; padding: 2px 4px 2px 10px; font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+.chip-f button { border: 0; background: none; cursor: pointer; color: inherit; padding: 0 4px; font-size: 14px; line-height: 1; }
+
+/* ------------------------------------------------------------ tableau */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.table-wrap { overflow: auto; max-height: calc(100vh - 210px); }
+table.grid { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+table.grid th {
+  position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-weight: 600; color: var(--text-2);
+  padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; font-size: 12px;
+}
+table.grid th .arr { color: var(--accent); margin-left: 3px; }
+table.grid th.nosort { cursor: default; }
+table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.grid tbody tr { cursor: pointer; }
+table.grid tbody tr:hover td { background: var(--surface-2); }
+table.grid tbody tr.inactive td { color: var(--text-3); }
+table.grid tbody tr.inactive .ttl { text-decoration: line-through; text-decoration-color: var(--border-strong); }
+.ttl { font-weight: 600; color: var(--text); display: block; min-width: 240px; max-width: 420px; }
+td.col-desk { max-width: 170px; }
+td.col-desk .tag { white-space: normal; }
+.co { font-weight: 600; white-space: nowrap; }
+.co small { display: block; font-weight: 400; color: var(--text-3); font-size: 11px; }
+.muted { color: var(--text-3); }
+.nowrap { white-space: nowrap; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.tag { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 11.5px; font-weight: 500; background: var(--surface-2); color: var(--text-2); white-space: nowrap; margin: 1px 2px 1px 0; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; vertical-align: 1px; margin-right: 5px; }
+.badge.new { background: var(--accent-soft); color: var(--accent-text); }
+.badge.repost { background: var(--violet-soft); color: var(--violet); }
+.badge.maj { background: var(--warn-soft); color: var(--warn); }
+.badge.off { background: var(--surface-2); color: var(--text-3); }
+.fit { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; font-size: 12.5px; }
+.fit i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.fit.ok i { background: var(--good); } .fit.chk i { background: var(--warn); } .fit.ko i { background: var(--bad); }
+.fit.ok { color: var(--good); } .fit.ko { color: var(--text-3); }
+select.status {
+  border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  background: var(--surface-2); max-width: 140px;
+}
+select.status:hover { border-color: var(--border-strong); }
+select.status[data-s="Postulée"], select.status[data-s="Test en ligne"] { background: var(--accent-soft); color: var(--accent-text); }
+select.status[data-s="Entretien"] { background: var(--violet-soft); color: var(--violet); }
+select.status[data-s="Offre reçue"] { background: var(--good-soft); color: var(--good); }
+select.status[data-s="Refusée"] { background: var(--bad-soft); color: var(--bad); }
+select.status[data-s="Pas intéressé"], select.status[data-s="Expirée"] { color: var(--text-3); }
+select.status[data-s="À postuler"] { background: var(--warn-soft); color: var(--warn); }
+.star { border: 0; background: none; cursor: pointer; font-size: 16px; color: var(--border-strong); padding: 0 2px; line-height: 1; }
+.star.on { color: #eda100; }
+.apply { font-weight: 600; white-space: nowrap; }
+.score { font-family: var(--mono); font-weight: 600; }
+.dupcount { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.empty { padding: 48px 20px; text-align: center; color: var(--text-3); }
+.empty b { color: var(--text-2); display: block; font-size: 15px; margin-bottom: 4px; }
+
+/* cartes mobiles */
+.cards { display: none; }
+.card { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.card:last-child { border-bottom: 0; }
+.card .row1 { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.card .meta { color: var(--text-3); font-size: 12.5px; margin-top: 4px; }
+.card .row3 { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
+
+/* ------------------------------------------------------------ panneau détail */
+.drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.28); z-index: 50; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100vw); background: var(--surface); z-index: 51;
+  box-shadow: -10px 0 40px rgba(0,0,0,.18); display: flex; flex-direction: column;
+}
+.drawer header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start; }
+.drawer header h2 { margin: 2px 0 4px; font-size: 18px; line-height: 1.3; letter-spacing: -.01em; }
+.drawer .body { overflow: auto; padding: 16px 20px 40px; }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 14px; margin-bottom: 16px; font-size: 13px; }
+.kv dt { color: var(--text-3); }
+.kv dd { margin: 0; }
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); margin: 22px 0 8px; }
+.desc { white-space: pre-wrap; font-size: 13.5px; color: var(--text-2); background: var(--surface-2); padding: 12px 14px; border-radius: 8px; max-height: 340px; overflow: auto; }
+textarea, input.inp, select.inp { width: 100%; border: 1px solid var(--border-strong); background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 80px; resize: vertical; }
+.match { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; background: var(--surface-2); padding: 14px; border-radius: 10px; }
+.match .big { font-size: 34px; font-weight: 700; font-family: var(--mono); letter-spacing: -.03em; }
+.match ul { margin: 4px 0; padding-left: 18px; }
+.dup-list a { display: block; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; color: var(--text); }
+.dup-list a:hover { border-color: var(--accent); text-decoration: none; }
+.timeline { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.timeline li { padding: 4px 0 4px 16px; border-left: 2px solid var(--border); position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -5px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+/* ------------------------------------------------------------ modale */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 60; display: grid; place-items: center; padding: 16px; }
+.modal { background: var(--surface); border-radius: 14px; width: min(560px, 100%); max-height: 92vh; overflow: auto; box-shadow: var(--shadow); }
+.modal header { padding: 18px 20px 6px; }
+.modal header h2 { margin: 0; font-size: 18px; }
+.modal header p { margin: 4px 0 0; color: var(--text-3); font-size: 13px; }
+.modal .body { padding: 10px 20px; display: grid; gap: 10px; }
+.modal label { font-size: 12.5px; font-weight: 600; color: var(--text-2); display: grid; gap: 4px; }
+.modal footer { padding: 12px 20px 18px; display: flex; justify-content: flex-end; gap: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ------------------------------------------------------------ stats */
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.kpi { padding: 14px 16px; }
+.kpi .lbl { color: var(--text-3); font-size: 12.5px; }
+.kpi .val { font-size: 28px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; font-family: var(--mono); }
+.kpi .sub { color: var(--text-3); font-size: 12px; }
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.chart-card { padding: 14px 16px 10px; }
+.chart-card h3 { margin: 0 0 2px; font-size: 14px; }
+.chart-card p { margin: 0 0 10px; font-size: 12.5px; color: var(--text-3); }
+.chart-box { position: relative; height: 260px; }
+.chart-card.wide { grid-column: span 2; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-2); margin-bottom: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+details.tbl { margin-top: 8px; font-size: 12.5px; color: var(--text-3); }
+details.tbl table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+details.tbl td, details.tbl th { padding: 3px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+
+/* ------------------------------------------------------------ connexion */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login .box { width: min(380px, 100%); padding: 28px; }
+.login h1 { font-size: 20px; margin: 14px 0 4px; letter-spacing: -.01em; }
+.login p { color: var(--text-3); margin: 0 0 18px; font-size: 13px; }
+.login form { display: grid; gap: 10px; }
+.err { color: var(--bad); font-size: 13px; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 9px; z-index: 80; font-size: 13px; box-shadow: var(--shadow); }
+
+.src-ok { color: var(--good); font-weight: 600; } .src-ko { color: var(--bad); font-weight: 600; }
+
+/* ------------------------------------------------------------ responsive */
+.btn-filters { display: none !important; }
+@media (max-width: 1680px) { .col-src { display: none; } }
+@media (max-width: 1560px) { .col-posted { display: none; } }
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .col-desk { display: none; }
+}
+@media (max-width: 760px) {
+  .top-inner { padding: 8px 16px; flex-wrap: wrap; gap: 8px; }
+  .brand small { display: none; }
+  #btn-add span { display: none; }
+  nav.tabs { order: 3; width: 100%; overflow-x: auto; }
+  nav.tabs button { flex: 1; justify-content: center; padding: 6px 8px; }
+  main { padding: 12px 16px 60px; }
+  .filters .ms, .filters .toggle, .filters .daterange { display: none; }
+  .filters.open .ms, .filters.open .toggle, .filters.open .daterange { display: inline-flex; }
+  .filters .search { max-width: none; }
+  .btn-filters { display: inline-flex !important; }
+  .table-wrap { display: none; }
+  .cards { display: block; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi .val { font-size: 24px; }
+  .charts { grid-template-columns: 1fr; }
+  .chart-card.wide { grid-column: auto; }
+  .kv { grid-template-columns: 110px 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .ms-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; max-width: none; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// =====================================================================
+//  Veille stages — dashboard
+// =====================================================================
+const STATUSES = ["Nouvelle", "À postuler", "Postulée", "Test en ligne", "Entretien", "Offre reçue", "Refusée", "Pas intéressé"];
+const APPLIED = new Set(["Postulée", "Test en ligne", "Entretien", "Offre reçue", "Refusée"]);
+const RESPONDED = new Set(["Test en ligne", "Entretien", "Offre reçue", "Refusée"]);
+const CFG = window.VEILLE_CONFIG || {};
+const params = new URLSearchParams(location.search);
+const DEMO = params.has("demo") || !CFG.supabaseUrl || !CFG.supabaseAnonKey;
+let sb = null;
+
+const state = {
+  offers: [], runs: [], inbox: [], history: [],
+  tab: "offers",
+  sort: { offers: { key: "first_seen_at", dir: -1 }, dups: { key: "first_seen_at", dir: -1 } },
+  filters: { offers: freshFilters(), dups: freshFilters() },
+  lastVisit: null,
+  charts: [],
+};
+
+function freshFilters() {
+  return { q: "", company: [], category: [], role: [], desk: [], city: [], status: [], fit: [], source: [],
+           dateField: "first_seen_at", days: "", favorites: false, newOnly: false, showExpired: false,
+           showFiltered: false, minScore: "" };
+}
+
+// ------------------------------------------------------------ utilitaires
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDate = d => d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "2-digit" }) : "—";
+const fmtDT = d => d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const startLabel = o => o.start_month ? `${MONTHS[o.start_month - 1]} ${o.start_year}` : (o.start_year ? String(o.start_year) : "—");
+const daysAgo = d => (Date.now() - new Date(d).getTime()) / 86400000;
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+const ICON = {
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>',
+  out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
+  dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>',
+  filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+};
+
+// ------------------------------------------------------------ données
+const LIST_COLS = "id,group_id,is_primary,dup_reason,badge,badge_at,company,company_category,company_listed,title,city,cities,country,location,source,url,apply_url,posted_at,first_seen_at,last_seen_at,active,role_type,roles,desks,duration_months,start_year,start_month,start_text,period_fit,period_label,relevant,filter_reason,manual,status,status_updated_at,applied_at,notes,favorite,deadline,match_score,match_confidence,match_summary";
+
+async function fetchAll(table, select, order) {
+  let rows = [], from = 0;
+  for (;;) {
+    let q = sb.from(table).select(select).range(from, from + 999);
+    if (order) q = q.order(order, { ascending: false });
+    const { data, error } = await q;
+    if (error) throw error;
+    rows = rows.concat(data);
+    if (data.length < 1000) return rows;
+    from += 1000;
+  }
+}
+
+async function loadData() {
+  if (DEMO) { Object.assign(state, demoData()); return; }
+  const [offers, runs, inbox, history] = await Promise.all([
+    fetchAll("offers", LIST_COLS),
+    sb.from("runs").select("*").order("finished_at", { ascending: false }).limit(600).then(r => { if (r.error) throw r.error; return r.data; }),
+    sb.from("inbox").select("*").order("created_at", { ascending: false }).limit(50).then(r => { if (r.error) throw r.error; return r.data; }),
+    fetchAll("status_history", "group_id,status,changed_at"),
+  ]);
+  Object.assign(state, { offers, runs, inbox, history });
+}
+
+async function saveOffer(o, patch) {
+  // Mise à jour locale de tout le groupe (le déclencheur SQL fait la même chose côté base)
+  const shared = ["status", "notes", "favorite", "deadline"];
+  const groupPatch = Object.fromEntries(Object.entries(patch).filter(([k]) => shared.includes(k)));
+  for (const x of state.offers) {
+    if (x.id === o.id) Object.assign(x, patch);
+    else if (x.group_id === o.group_id) Object.assign(x, groupPatch);
+  }
+  if ("status" in patch) {
+    const now = new Date().toISOString();
+    state.history.push({ group_id: o.group_id, status: patch.status, changed_at: now });
+    for (const x of state.offers) if (x.group_id === o.group_id) {
+      x.status_updated_at = now;
+      if (patch.status === "Postulée" && !x.applied_at) x.applied_at = now;
+    }
+  }
+  if (DEMO) return;
+  const { error } = await sb.from("offers").update(patch).eq("id", o.id);
+  if (error) toast("Erreur d'enregistrement : " + error.message);
+}
+
+// ------------------------------------------------------------ filtrage & tri
+const FACETS = {
+  company: { label: "Entreprise", get: o => [o.company] },
+  category: { label: "Catégorie", get: o => [o.company_category || "—"] },
+  role: { label: "Poste", get: o => [o.role_type || "Non précisé"] },
+  desk: { label: "Desk", get: o => (o.desks && o.desks.length ? o.desks : ["Non précisé"]) },
+  city: { label: "Ville", get: o => [o.city || "Non précisée"] },
+  status: { label: "Statut", get: o => [o.status || "Nouvelle"] },
+  fit: { label: "Période", get: o => [o.period_fit || "À vérifier"] },
+  source: { label: "Source", get: o => [o.source || "—"] },
+};
+
+function baseRows(view) {
+  return state.offers.filter(o => view === "dups" ? !o.is_primary : o.is_primary);
+}
+
+function applyFilters(rows, f, skip) {
+  const q = f.q.trim().toLowerCase();
+  const terms = q ? q.split(/\s+/) : [];
+  return rows.filter(o => {
+    if (!f.showFiltered && o.relevant === false) return false;
+    if (!f.showExpired && o.active === false) return false;
+    if (f.favorites && !o.favorite) return false;
+    if (f.newOnly && !(state.lastVisit && (o.first_seen_at > state.lastVisit || (o.badge_at && o.badge_at > state.lastVisit)))) return false;
+    if (f.days) {
+      const d = o[f.dateField] || o.first_seen_at;
+      if (!d || daysAgo(d) > Number(f.days)) return false;
+    }
+    if (f.minScore !== "" && !(o.match_score >= Number(f.minScore))) return false;
+    for (const k of Object.keys(FACETS)) {
+      if (k === skip || !f[k].length) continue;
+      const vals = FACETS[k].get(o);
+      if (!vals.some(v => f[k].includes(v))) return false;
+    }
+    if (terms.length) {
+      const hay = [o.company, o.title, o.location, o.role_type, (o.desks || []).join(" "), o.notes, o.status, o.source]
+        .join(" ").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (!terms.every(t => hay.includes(t.normalize("NFD").replace(/[̀-ͯ]/g, "")))) return false;
+    }
+    return true;
+  });
+}
+
+const SORTERS = {
+  favorite: o => o.favorite ? 1 : 0,
+  company: o => (o.company || "").toLowerCase(),
+  title: o => (o.title || "").toLowerCase(),
+  role_type: o => o.role_type || "~",
+  desks: o => (o.desks || [])[0] || "~",
+  city: o => o.city || "~",
+  start: o => o.start_year ? o.start_year * 100 + (o.start_month || 0) : 999999,
+  period_fit: o => ({ "OK": 0, "À vérifier": 1, "Incompatible": 2 }[o.period_fit] ?? 1),
+  posted_at: o => o.posted_at || "",
+  first_seen_at: o => o.badge_at && o.badge_at > o.first_seen_at ? o.badge_at : o.first_seen_at || "",
+  source: o => o.source || "",
+  status: o => STATUSES.indexOf(o.status),
+  dups: o => groupSize(o),
+  match_score: o => o.match_score ?? -1,
+  primary: o => (primaryOf(o)?.title || "").toLowerCase(),
+};
+function sortRows(rows, s) {
+  const fn = SORTERS[s.key] || SORTERS.first_seen_at;
+  return rows.slice().sort((a, b) => { const x = fn(a), y = fn(b); return (x < y ? -1 : x > y ? 1 : 0) * s.dir; });
+}
+let groupIndex = null;
+function buildGroupIndex() {
+  groupIndex = new Map();
+  for (const o of state.offers) {
+    if (!groupIndex.has(o.group_id)) groupIndex.set(o.group_id, []);
+    groupIndex.get(o.group_id).push(o);
+  }
+}
+const groupOf = o => groupIndex.get(o.group_id) || [o];
+const groupSize = o => groupOf(o).length - 1;
+const primaryOf = o => groupOf(o).find(x => x.is_primary);
+
+// ------------------------------------------------------------ rendu : structure
+function renderShell() {
+  $("#app").innerHTML = `
+  <header class="top"><div class="top-inner">
+    <div class="brand"><div class="logo"><svg width="16" height="16" viewBox="0 0 32 32"><path d="M5 23l7-8 5 4 10-12" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      Veille stages <small>S&amp;T · Risk · MO</small> ${DEMO ? '<span class="demo-pill">DÉMO</span>' : ""}</div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="offers">Offres <span class="count" id="c-offers"></span></button>
+      <button data-tab="dups">Doublons <span class="count" id="c-dups"></span></button>
+      <button data-tab="stats">Statistiques</button>
+      <button data-tab="sources">Sources</button>
+    </nav>
+    <div class="top-actions">
+      <button class="btn primary" id="btn-add">${ICON.plus}<span>Ajouter</span></button>
+      <button class="btn icon ghost" id="btn-refresh" title="Actualiser">${ICON.refresh}</button>
+      <button class="btn icon ghost" id="btn-theme" title="Thème clair / sombre">${ICON.moon}</button>
+      ${DEMO ? "" : `<button class="btn icon ghost" id="btn-logout" title="Se déconnecter">${ICON.out}</button>`}
+    </div>
+  </div></header>
+  <main id="view"></main>`;
+  $("#tabs").onclick = e => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; lsSet("vs-tab", state.tab); render(); } };
+  $("#btn-add").onclick = openAdd;
+  $("#btn-refresh").onclick = async () => { await refresh(); toast("Données actualisées"); };
+  $("#btn-theme").onclick = () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = cur === "dark" ? "light" : "dark";
+    lsSet("vs-theme", document.documentElement.dataset.theme);
+    if (state.tab === "stats") render();
+  };
+  if (!DEMO) $("#btn-logout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+}
+
+function render() {
+  buildGroupIndex();
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === state.tab);
+  const nP = state.offers.filter(o => o.is_primary && o.relevant !== false && o.active !== false).length;
+  const nD = state.offers.filter(o => !o.is_primary && o.relevant !== false).length;
+  $("#c-offers").textContent = nP; $("#c-dups").textContent = nD;
+  state.charts.forEach(c => c.destroy()); state.charts = [];
+  if (state.tab === "offers" || state.tab === "dups") renderList(state.tab);
+  else if (state.tab === "stats") renderStats();
+  else renderSources();
+}
+
+// ------------------------------------------------------------ rendu : listes
+function renderList(view) {
+  const f = state.filters[view];
+  const hasScore = state.offers.some(o => o.match_score != null);
+  $("#view").innerHTML = `
+    <div class="filters" id="filters">
+      <div class="search">${ICON.search}<input id="q" placeholder="Rechercher (entreprise, intitulé, desk, notes…)" value="${esc(f.q)}"></div>
+      <button class="btn btn-filters" id="btn-filters">${ICON.filter} Filtres</button>
+      ${Object.keys(FACETS).map(k => `<div class="ms" data-k="${k}"></div>`).join("")}
+      <span class="daterange">
+        <select id="dateField">
+          <option value="first_seen_at" ${f.dateField === "first_seen_at" ? "selected" : ""}>Détectée</option>
+          <option value="posted_at" ${f.dateField === "posted_at" ? "selected" : ""}>Publiée</option>
+        </select>
+        <select id="days">
+          ${[["", "toute date"], ["1", "< 24 h"], ["3", "< 3 jours"], ["7", "< 7 jours"], ["14", "< 14 jours"], ["30", "< 30 jours"], ["90", "< 3 mois"]]
+            .map(([v, l]) => `<option value="${v}" ${String(f.days) === v ? "selected" : ""}>${l}</option>`).join("")}
+        </select>
+      </span>
+      ${hasScore ? `<span class="daterange">Match ≥ <input id="minScore" type="number" min="0" max="100" step="5" style="width:64px" value="${esc(f.minScore)}"> %</span>` : ""}
+      <label class="toggle"><input type="checkbox" id="favorites" ${f.favorites ? "checked" : ""}> ★ Favoris</label>
+      <label class="toggle"><input type="checkbox" id="newOnly" ${f.newOnly ? "checked" : ""}> Nouvelles depuis ma dernière visite</label>
+      <label class="toggle"><input type="checkbox" id="showExpired" ${f.showExpired ? "checked" : ""}> Expirées</label>
+      <label class="toggle" title="Offres collectées mais écartées par tes critères (utile pour vérifier les filtres)"><input type="checkbox" id="showFiltered" ${f.showFiltered ? "checked" : ""}> Écartées</label>
+    </div>
+    <div class="subbar"><div class="chips" id="chips"></div><div style="display:flex;gap:10px;align-items:center">
+      <span id="countline"></span>
+      <button class="btn ghost" id="btn-csv">${ICON.dl} CSV</button></div></div>
+    <div class="panel">
+      <div class="table-wrap"><table class="grid" id="grid"></table></div>
+      <div class="cards" id="cards"></div>
+    </div>`;
+  for (const el of document.querySelectorAll(".ms")) renderFacet(el, view);
+  $("#q").oninput = e => { f.q = e.target.value; refreshList(view); };
+  $("#dateField").onchange = e => { f.dateField = e.target.value; refreshList(view); };
+  $("#days").onchange = e => { f.days = e.target.value; refreshList(view); };
+  if ($("#minScore")) $("#minScore").oninput = e => { f.minScore = e.target.value; refreshList(view); };
+  for (const id of ["favorites", "newOnly", "showExpired", "showFiltered"]) $("#" + id).onchange = e => { f[id] = e.target.checked; refreshList(view); };
+  $("#btn-filters").onclick = () => $("#filters").classList.toggle("open");
+  $("#btn-csv").onclick = () => exportCSV(view);
+  refreshList(view);
+}
+
+function renderFacet(el, view) {
+  const k = el.dataset.k, f = state.filters[view];
+  const sel = f[k];
+  el.innerHTML = `<button class="${sel.length ? "active" : ""}">${FACETS[k].label}${sel.length ? ` <span class="n">${sel.length}</span>` : ""} ${ICON.down}</button>`;
+  el.firstChild.onclick = e => { e.stopPropagation(); openFacet(el, view); };
+}
+
+function openFacet(el, view) {
+  closePops();
+  const k = el.dataset.k, f = state.filters[view];
+  const counts = new Map();
+  for (const o of applyFilters(baseRows(view), f, k)) for (const v of FACETS[k].get(o)) counts.set(v, (counts.get(v) || 0) + 1);
+  for (const v of f[k]) if (!counts.has(v)) counts.set(v, 0);
+  let vals = [...counts.entries()];
+  if (k === "status") vals.sort((a, b) => STATUSES.indexOf(a[0]) - STATUSES.indexOf(b[0]));
+  else vals.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const pop = document.createElement("div");
+  pop.className = "ms-pop";
+  pop.innerHTML = (vals.length > 8 ? `<input type="text" placeholder="Filtrer…">` : "") +
+    `<div class="opts">${vals.map(([v, n]) => `<label data-v="${esc(v)}"><input type="checkbox" value="${esc(v)}" ${f[k].includes(v) ? "checked" : ""}> ${esc(v)} <span class="c">${n}</span></label>`).join("") || '<div class="muted" style="padding:6px">Aucune valeur</div>'}</div>
+    <div class="ms-foot"><button data-a="clear">Effacer</button><button data-a="close">Fermer</button></div>`;
+  pop.onclick = e => e.stopPropagation();
+  pop.onchange = e => {
+    if (e.target.type !== "checkbox") return;
+    const v = e.target.value;
+    f[k] = e.target.checked ? [...f[k], v] : f[k].filter(x => x !== v);
+    renderFacetButton(el, view); refreshList(view, true);
+  };
+  const s = pop.querySelector("input[type=text]");
+  if (s) { s.oninput = () => { const t = s.value.toLowerCase(); for (const l of pop.querySelectorAll("label")) l.style.display = l.dataset.v.toLowerCase().includes(t) ? "" : "none"; }; setTimeout(() => s.focus(), 0); }
+  pop.querySelector('[data-a=clear]').onclick = () => { f[k] = []; for (const c of pop.querySelectorAll("input[type=checkbox]")) c.checked = false; renderFacetButton(el, view); refreshList(view, true); };
+  pop.querySelector('[data-a=close]').onclick = closePops;
+  el.appendChild(pop);
+}
+function renderFacetButton(el, view) {
+  const k = el.dataset.k, sel = state.filters[view][k], b = el.querySelector(":scope > button");
+  b.className = sel.length ? "active" : "";
+  b.innerHTML = `${FACETS[k].label}${sel.length ? ` <span class="n">${sel.length}</span>` : ""} ${ICON.down}`;
+}
+function closePops() { document.querySelectorAll(".ms-pop").forEach(p => p.remove()); }
+document.addEventListener("click", closePops);
+
+function refreshList(view, keepPops) {
+  const f = state.filters[view], s = state.sort[view];
+  const rows = sortRows(applyFilters(baseRows(view), f), s);
+  lsSet("vs-filters-" + view, f);
+  // puces de filtres actifs
+  const chips = [];
+  for (const k of Object.keys(FACETS)) for (const v of f[k]) chips.push([k, v, `${FACETS[k].label} : ${v}`]);
+  $("#chips").innerHTML = chips.map(([k, v, l]) => `<span class="chip-f">${esc(l)}<button data-k="${k}" data-v="${esc(v)}">×</button></span>`).join("") +
+    (chips.length > 1 ? `<span class="chip-f" style="background:none"><button data-all="1" style="font-size:12px">Tout effacer</button></span>` : "");
+  $("#chips").onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.all) for (const k of Object.keys(FACETS)) f[k] = []; else f[b.dataset.k] = f[b.dataset.k].filter(x => x !== b.dataset.v);
+    renderList(view);
+  };
+  const total = baseRows(view).filter(o => o.relevant !== false && o.active !== false).length;
+  $("#countline").textContent = `${rows.length} offre${rows.length > 1 ? "s" : ""} affichée${rows.length > 1 ? "s" : ""} · ${total} active${total > 1 ? "s" : ""} au total`;
+  const hasScore = state.offers.some(o => o.match_score != null);
+  const cols = view === "offers" ? [
+    ["favorite", "★", ""], ["company", "Entreprise", ""], ["title", "Intitulé", ""], ["role_type", "Poste", ""],
+    ["desks", "Desk", "col-desk"], ["city", "Ville", ""], ["start", "Début · période", ""],
+    ["posted_at", "Publiée", "col-posted"], ["first_seen_at", "Détectée", ""], ["source", "Source", "col-src"],
+    ...(hasScore ? [["match_score", "Match", ""]] : []),
+    ["status", "Statut", ""], ["dups", "Doublons", ""], ["apply", "Postuler", "nosort"],
+  ] : [
+    ["company", "Entreprise", ""], ["title", "Intitulé (doublon)", ""], ["primary", "Offre principale", ""],
+    ["dup_reason", "Raison", "nosort"], ["city", "Ville", ""], ["source", "Source", "col-src"],
+    ["posted_at", "Publiée", "col-posted"], ["first_seen_at", "Détectée", ""], ["status", "Statut", ""], ["apply", "Lien", "nosort"],
+  ];
+  const head = `<thead><tr>${cols.map(([k, l, cls]) => `<th data-k="${k}" class="${cls}">${l}${s.key === k ? `<span class="arr">${s.dir < 0 ? "↓" : "↑"}</span>` : ""}</th>`).join("")}</tr></thead>`;
+  const body = rows.length ? rows.map(o => rowHTML(o, cols, view)).join("") :
+    `<tr><td colspan="${cols.length}"><div class="empty"><b>Aucune offre ne correspond</b>${state.offers.length ? "Élargis les filtres ou coche « Écartées » pour voir ce que la veille a mis de côté." : "La veille n'a encore rien collecté. Le premier passage a lieu dans les 30 minutes suivant l'installation."}</div></td></tr>`;
+  $("#grid").innerHTML = head + "<tbody>" + body + "</tbody>";
+  $("#cards").innerHTML = rows.length ? rows.map(o => cardHTML(o, view)).join("") : `<div class="empty"><b>Aucune offre ne correspond</b>Modifie les filtres.</div>`;
+  $("#grid thead").onclick = e => {
+    const th = e.target.closest("th"); if (!th || th.classList.contains("nosort")) return;
+    const k = th.dataset.k;
+    s.dir = s.key === k ? -s.dir : (["company", "title", "role_type", "desks", "city", "start", "period_fit", "source", "status", "primary"].includes(k) ? 1 : -1);
+    s.key = k; lsSet("vs-sort", state.sort); refreshList(view);
+  };
+  for (const root of [$("#grid tbody"), $("#cards")]) bindRowEvents(root, view);
+}
+
+function badgesHTML(o) {
+  let h = "";
+  const recent = state.lastVisit && o.first_seen_at > state.lastVisit;
+  if (o.badge === "Repost" && o.badge_at && daysAgo(o.badge_at) < 14) h += `<span class="badge repost" title="Réapparue après une absence (désistement probable)">Repost</span>`;
+  else if (o.badge === "Mise à jour" && o.badge_at && daysAgo(o.badge_at) < 14) h += `<span class="badge maj" title="Contenu modifié de façon importante">Mise à jour</span>`;
+  else if (recent) h += `<span class="badge new">Nouveau</span>`;
+  if (o.active === false) h += `<span class="badge off">Expirée</span>`;
+  if (o.relevant === false) h += `<span class="badge off" title="${esc(o.filter_reason)}">Écartée</span>`;
+  if (o.manual) h += `<span class="badge off">Manuel</span>`;
+  return h;
+}
+function fitHTML(o) {
+  const c = o.period_fit === "OK" ? "ok" : o.period_fit === "Incompatible" ? "ko" : "chk";
+  return `<span class="fit ${c}" title="${esc(o.period_label || "")}${o.start_text ? " — « " + esc(o.start_text) + " »" : ""}"><i></i>${esc(o.period_fit || "À vérifier")}</span>`;
+}
+function statusHTML(o) {
+  return `<select class="status" data-id="${o.id}" data-s="${esc(o.status)}" onclick="event.stopPropagation()">${STATUSES.map(s => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>`;
+}
+function applyHTML(o) {
+  const u = o.apply_url || o.url;
+  return u ? `<a class="apply" href="${esc(u)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Postuler ↗</a>` : "—";
+}
+function rowHTML(o, cols, view) {
+  const cells = {
+    favorite: `<button class="star ${o.favorite ? "on" : ""}" data-fav="${o.id}" title="Favori">★</button>`,
+    company: `<span class="co">${esc(o.company)}<small>${esc(o.company_category || "")}</small></span>`,
+    title: `${badgesHTML(o)}<span class="ttl">${esc(o.title)}</span>`,
+    role_type: o.role_type ? `<span class="tag">${esc(o.role_type)}</span>` : '<span class="muted">—</span>',
+    desks: (o.desks || []).map(d => `<span class="tag">${esc(d)}</span>`).join("") || '<span class="muted">—</span>',
+    city: `<span class="nowrap">${esc(o.city || "—")}</span>`,
+    start: `<span class="nowrap">${startLabel(o)}${o.duration_months ? ` <span class="muted">· ${o.duration_months} m</span>` : ""}</span><br>${fitHTML(o)}`,
+    period_fit: fitHTML(o),
+    posted_at: `<span class="nowrap muted">${fmtDate(o.posted_at)}</span>`,
+    first_seen_at: `<span class="nowrap">${fmtDT(o.first_seen_at)}</span>`,
+    source: `<span class="muted nowrap">${esc(o.source || "")}</span>`,
+    match_score: o.match_score != null ? `<span class="score" title="${esc(o.match_summary || "")}">${o.match_score} %</span>` : '<span class="muted">—</span>',
+    status: statusHTML(o),
+    dups: groupSize(o) ? `<span class="dupcount">+${groupSize(o)}</span>` : '<span class="muted">—</span>',
+    apply: applyHTML(o),
+    primary: (() => { const p = primaryOf(o); return p ? `<span class="ttl" style="font-weight:500">${esc(p.title)}</span><span class="muted">${esc(p.source || "")} · ${fmtDT(p.first_seen_at)}</span>` : "—"; })(),
+    dup_reason: `<span class="tag">${esc(o.dup_reason || "Doublon")}</span>`,
+  };
+  return `<tr data-id="${o.id}" class="${o.active === false ? "inactive" : ""}">${cols.map(([k, , cls]) => `<td class="${cls === "nosort" ? "" : cls}">${cells[k]}</td>`).join("")}</tr>`;
+}
+function cardHTML(o, view) {
+  const p = view === "dups" ? primaryOf(o) : null;
+  return `<div class="card" data-id="${o.id}">
+    <div class="row1"><div><div class="co">${esc(o.company)}</div><div>${badgesHTML(o)}<span class="ttl">${esc(o.title)}</span></div></div>
+      ${view === "offers" ? `<button class="star ${o.favorite ? "on" : ""}" data-fav="${o.id}">★</button>` : ""}</div>
+    <div class="meta">${[o.role_type, (o.desks || []).join(", "), o.city, startLabel(o)].filter(x => x && x !== "—").map(esc).join(" · ")}</div>
+    <div class="meta">${fitHTML(o)} · détectée ${fmtDT(o.first_seen_at)}${o.match_score != null ? ` · <b>${o.match_score} %</b>` : ""}${groupSize(o) && view === "offers" ? ` · +${groupSize(o)} doublon(s)` : ""}</div>
+    ${p ? `<div class="meta">Principale : ${esc(p.title)} (${esc(p.source || "")})</div>` : ""}
+    <div class="row3">${statusHTML(o)}${applyHTML(o)}</div>
+  </div>`;
+}
+function bindRowEvents(root, view) {
+  root.onchange = async e => {
+    const sel = e.target.closest("select.status"); if (!sel) return;
+    const o = state.offers.find(x => x.id === sel.dataset.id);
+    sel.dataset.s = sel.value;
+    await saveOffer(o, { status: sel.value });
+    const n = groupSize(o);
+    toast(`Statut « ${sel.value} » enregistré${n ? ` (et appliqué à ${n} doublon${n > 1 ? "s" : ""})` : ""}`);
+    refreshList(view);
+  };
+  root.onclick = async e => {
+    const fav = e.target.closest("[data-fav]");
+    if (fav) { e.stopPropagation(); const o = state.offers.find(x => x.id === fav.dataset.fav); await saveOffer(o, { favorite: !o.favorite }); refreshList(view); return; }
+    if (e.target.closest("a, select")) return;
+    const r = e.target.closest("[data-id]");
+    if (r) openDetail(state.offers.find(x => x.id === r.dataset.id));
+  };
+}
+
+function exportCSV(view) {
+  const rows = sortRows(applyFilters(baseRows(view), state.filters[view]), state.sort[view]);
+  const cols = ["company", "company_category", "title", "role_type", "desks", "city", "location", "start_year", "start_month", "duration_months", "period_fit", "posted_at", "first_seen_at", "source", "status", "applied_at", "notes", "apply_url", "url", "match_score"];
+  const q = v => `"${String(Array.isArray(v) ? v.join(" / ") : v ?? "").replace(/"/g, '""')}"`;
+  const csv = "﻿" + cols.join(";") + "\n" + rows.map(o => cols.map(c => q(o[c])).join(";")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = `veille-stages-${view}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
+
+// ------------------------------------------------------------ détail d'une offre
+async function openDetail(o) {
+  closeDetail();
+  const bg = document.createElement("div"); bg.className = "drawer-bg"; bg.onclick = closeDetail;
+  const d = document.createElement("aside"); d.className = "drawer"; d.id = "drawer";
+  const g = groupOf(o).filter(x => x.id !== o.id).sort((a, b) => (a.first_seen_at > b.first_seen_at ? 1 : -1));
+  const hist = state.history.filter(h => h.group_id === o.group_id).sort((a, b) => a.changed_at > b.changed_at ? 1 : -1);
+  const list = v => (Array.isArray(v) ? v : []).map(x => `<li>${esc(x)}</li>`).join("");
+  d.innerHTML = `
+    <header>
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:13px">${esc(o.company)} · ${esc(o.company_category || "")}</div>
+        <h2>${badgesHTML(o)}${esc(o.title)}</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">${statusHTML(o)}
+          ${o.apply_url || o.url ? `<a class="btn primary" href="${esc(o.apply_url || o.url)}" target="_blank" rel="noopener">Postuler ↗</a>` : ""}
+          ${o.url && o.url !== o.apply_url ? `<a class="btn" href="${esc(o.url)}" target="_blank" rel="noopener">Annonce ↗</a>` : ""}
+          <button class="star ${o.favorite ? "on" : ""}" id="d-fav" style="font-size:20px">★</button></div>
+      </div>
+      <button class="btn icon ghost" id="d-close">${ICON.x}</button>
+    </header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Poste</dt><dd>${esc(o.role_type || "Non précisé")}</dd>
+        <dt>Desk</dt><dd>${(o.desks || []).map(x => `<span class="tag">${esc(x)}</span>`).join("") || "Non précisé"}</dd>
+        <dt>Lieu</dt><dd>${esc(o.location || o.city || "—")}</dd>
+        <dt>Début / durée</dt><dd>${startLabel(o)}${o.duration_months ? ` · ${o.duration_months} mois` : ""} &nbsp;${fitHTML(o)}${o.start_text ? `<div class="muted" style="font-size:12px">Repéré : « ${esc(o.start_text)} »</div>` : ""}</dd>
+        <dt>Publiée</dt><dd>${fmtDate(o.posted_at)}</dd>
+        <dt>Détectée</dt><dd>${fmtDT(o.first_seen_at)} <span class="muted">· vue pour la dernière fois ${fmtDT(o.last_seen_at)}</span></dd>
+        <dt>Source</dt><dd>${esc(o.source || "—")}</dd>
+        ${o.applied_at ? `<dt>Candidature</dt><dd>${fmtDT(o.applied_at)}</dd>` : ""}
+        ${o.filter_reason ? `<dt>Écartée car</dt><dd>${esc(o.filter_reason)}</dd>` : ""}
+      </dl>
+      <div class="two">
+        <label style="font-size:12.5px;font-weight:600;color:var(--text-2)">Date limite de candidature<input class="inp" type="date" id="d-deadline" value="${esc(o.deadline || "")}"></label>
+        <div></div>
+      </div>
+      <div class="section-title">Notes</div>
+      <textarea id="d-notes" placeholder="Contacts, relances, préparation d'entretien…">${esc(o.notes || "")}</textarea>
+      ${o.match_score != null ? `
+        <div class="section-title">Compatibilité avec ton CV</div>
+        <div class="match"><div class="big">${o.match_score}%</div><div>${esc(o.match_summary || "")}<div class="muted" style="font-size:12px">Fiabilité : ${esc(o.match_confidence || "—")}</div></div></div>
+        <div id="d-match-more" class="muted" style="font-size:13px;margin-top:8px">Chargement de l'analyse…</div>` : ""}
+      ${g.length ? `<div class="section-title">Autres apparitions de cette offre (${g.length})</div>
+        <div class="dup-list">${g.map(x => `<a href="#" data-goto="${x.id}"><b>${esc(x.source || "")}</b> · ${esc(x.title)}<div class="muted" style="font-size:12px">${x.is_primary ? "Offre principale" : esc(x.dup_reason || "Doublon")} · détectée ${fmtDT(x.first_seen_at)}</div></a>`).join("")}</div>` : ""}
+      ${hist.length ? `<div class="section-title">Historique du statut</div><ul class="timeline">${hist.map(h => `<li><b>${esc(h.status)}</b> <span class="muted">· ${fmtDT(h.changed_at)}</span></li>`).join("")}</ul>` : ""}
+      <div class="section-title">Description</div>
+      <div class="desc" id="d-desc">Chargement…</div>
+    </div>`;
+  document.body.append(bg, d);
+  $("#d-close").onclick = closeDetail;
+  $("#d-fav").onclick = async e => { await saveOffer(o, { favorite: !o.favorite }); e.target.classList.toggle("on", o.favorite); rerenderBehind(); };
+  d.querySelector("select.status").onchange = async e => { e.target.dataset.s = e.target.value; await saveOffer(o, { status: e.target.value }); toast("Statut enregistré"); rerenderBehind(); };
+  $("#d-notes").onchange = async e => { await saveOffer(o, { notes: e.target.value }); toast("Notes enregistrées"); };
+  $("#d-deadline").onchange = async e => { await saveOffer(o, { deadline: e.target.value || null }); toast("Date limite enregistrée"); };
+  d.querySelectorAll("[data-goto]").forEach(a => a.onclick = e => { e.preventDefault(); openDetail(state.offers.find(x => x.id === a.dataset.goto)); });
+  document.addEventListener("keydown", escClose);
+  // Chargement de la description (non chargée dans la liste, pour aller vite)
+  let full = o;
+  if (!DEMO) {
+    const { data } = await sb.from("offers").select("description,match_strengths,match_gaps,match_keywords").eq("id", o.id).single();
+    full = { ...o, ...(data || {}) };
+  }
+  if ($("#d-desc")) $("#d-desc").textContent = full.description || "Pas de description disponible (ouvre l'annonce).";
+  if ($("#d-match-more")) $("#d-match-more").innerHTML = `
+    ${full.match_strengths?.length ? `<b style="color:var(--text)">Points forts</b><ul>${list(full.match_strengths)}</ul>` : ""}
+    ${full.match_gaps?.length ? `<b style="color:var(--text)">Écarts</b><ul>${list(full.match_gaps)}</ul>` : ""}
+    ${full.match_keywords?.length ? `<b style="color:var(--text)">Mots-clés à ajouter</b><div>${full.match_keywords.map(k => `<span class="tag">${esc(k)}</span>`).join("")}</div>` : ""}`;
+}
+function escClose(e) { if (e.key === "Escape") closeDetail(); }
+function closeDetail() { document.querySelectorAll(".drawer, .drawer-bg").forEach(x => x.remove()); document.removeEventListener("keydown", escClose); }
+function rerenderBehind() { if (state.tab === "offers" || state.tab === "dups") refreshList(state.tab); }
+
+// ------------------------------------------------------------ ajout manuel
+function openAdd() {
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal" onclick="event.stopPropagation()">
+    <header><h2>Ajouter une offre</h2><p>Un post LinkedIn d'un stagiaire, une offre reçue par mail, un contact… La veille la classe et la dédoublonne à son prochain passage (30 min max).</p></header>
+    <div class="body">
+      <div class="two">
+        <label>Entreprise<input class="inp" id="a-company" placeholder="ex. Société Générale CIB" list="a-companies"></label>
+        <label>Origine<select class="inp" id="a-origin"><option>Post LinkedIn</option><option>Site carrière</option><option>E-mail / alerte</option><option>Réseau / bouche-à-oreille</option><option>Autre</option></select></label>
+      </div>
+      <datalist id="a-companies">${[...new Set(state.offers.map(o => o.company))].sort().map(c => `<option value="${esc(c)}">`).join("")}</datalist>
+      <label>Intitulé (si connu)<input class="inp" id="a-title" placeholder="ex. Stage Sales Equity Derivatives - Juillet 2027"></label>
+      <div class="two">
+        <label>Lien (post ou offre)<input class="inp" id="a-url" placeholder="https://…"></label>
+        <label>Lieu<input class="inp" id="a-location" placeholder="ex. Paris"></label>
+      </div>
+      <label>Texte du post / de l'offre<textarea id="a-text" rows="6" placeholder="Colle ici le texte : la veille en extrait le poste, le desk, la date de début…"></textarea></label>
+      <label>Date de publication (optionnel)<input class="inp" type="date" id="a-date"></label>
+      <div class="err" id="a-err"></div>
+    </div>
+    <footer><button class="btn" id="a-cancel">Annuler</button><button class="btn primary" id="a-save">Ajouter</button></footer>
+  </div>`;
+  bg.onclick = () => bg.remove();
+  document.body.appendChild(bg);
+  $("#a-cancel").onclick = () => bg.remove();
+  $("#a-save").onclick = async () => {
+    const row = { company: $("#a-company").value.trim(), title: $("#a-title").value.trim(), url: $("#a-url").value.trim() || null,
+                  location: $("#a-location").value.trim(), text: $("#a-text").value.trim(), origin: $("#a-origin").value,
+                  posted_at: $("#a-date").value ? new Date($("#a-date").value).toISOString() : null };
+    if (!row.company || !(row.title || row.text)) { $("#a-err").textContent = "Indique au moins l'entreprise et un intitulé ou un texte."; return; }
+    if (!DEMO) {
+      const { error } = await sb.from("inbox").insert(row);
+      if (error) { $("#a-err").textContent = error.message; return; }
+    }
+    state.inbox.unshift({ ...row, created_at: new Date().toISOString(), processed: false });
+    bg.remove();
+    toast("Ajoutée : elle apparaîtra au prochain passage de la veille");
+    if (state.tab === "sources") render();
+  };
+  setTimeout(() => $("#a-company").focus(), 0);
+}
+
+// ------------------------------------------------------------ statistiques
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function weekKey(d) {
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // lundi
+  return x.toISOString().slice(0, 10);
+}
+function lastWeeks(n) {
+  const out = []; const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  for (let i = n - 1; i >= 0; i--) { const x = new Date(d); x.setDate(x.getDate() - 7 * i); out.push(x.toISOString().slice(0, 10)); }
+  return out;
+}
+function countBy(rows, fn) { const m = new Map(); for (const r of rows) for (const k of [].concat(fn(r))) m.set(k, (m.get(k) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+
+function renderStats() {
+  const rel = state.offers.filter(o => o.is_primary && o.relevant !== false);
+  const active = rel.filter(o => o.active !== false);
+  const groups = rel; // une offre principale = un groupe
+  const applied = groups.filter(o => APPLIED.has(o.status));
+  const responded = groups.filter(o => RESPONDED.has(o.status));
+  const interviews = groups.filter(o => ["Entretien", "Offre reçue"].includes(o.status) || state.history.some(h => h.group_id === o.group_id && h.status === "Entretien"));
+  const new7 = rel.filter(o => daysAgo(o.first_seen_at) <= 7).length;
+  const fitOK = active.filter(o => o.period_fit === "OK").length;
+  // délai de réponse : de "Postulée" à la première réponse
+  const delays = [];
+  for (const o of applied) {
+    const h = state.history.filter(x => x.group_id === o.group_id).sort((a, b) => a.changed_at > b.changed_at ? 1 : -1);
+    const ap = o.applied_at || h.find(x => x.status === "Postulée")?.changed_at;
+    const rp = h.find(x => RESPONDED.has(x.status) && (!ap || x.changed_at > ap))?.changed_at;
+    if (ap && rp) delays.push((new Date(rp) - new Date(ap)) / 86400000);
+  }
+  const avgDelay = delays.length ? Math.round(delays.reduce((a, b) => a + b, 0) / delays.length) : null;
+  const pct = (a, b) => b ? Math.round(100 * a / b) + " %" : "—";
+
+  $("#view").innerHTML = `
+    <div class="kpis">
+      ${kpi("Offres actives", active.length, `${fitOK} avec période compatible`)}
+      ${kpi("Nouvelles (7 j)", new7, "offres détectées cette semaine")}
+      ${kpi("Candidatures", applied.length, `${groups.filter(o => o.status === "À postuler").length} à postuler`)}
+      ${kpi("Taux de réponse", pct(responded.length, applied.length), `${responded.length} réponse${responded.length > 1 ? "s" : ""}`)}
+      ${kpi("Entretiens", interviews.length, `${pct(interviews.length, applied.length)} des candidatures`)}
+      ${kpi("Délai de réponse", avgDelay == null ? "—" : avgDelay + " j", "moyenne, candidature → réponse")}
+    </div>
+    <div class="charts">
+      <div class="panel chart-card wide"><h3>Offres détectées et candidatures envoyées, par semaine</h3><p>12 dernières semaines</p>
+        <div class="legend"><span><i style="background:${cssVar("--series-1")}"></i>Offres détectées</span><span><i style="background:${cssVar("--series-2")}"></i>Candidatures</span></div>
+        <div class="chart-box"><canvas id="ch-weeks"></canvas></div>${tableDetails("ch-weeks")}</div>
+      <div class="panel chart-card"><h3>Entonnoir de candidature</h3><p>Nombre d'offres ayant atteint chaque étape</p><div class="chart-box"><canvas id="ch-funnel"></canvas></div>${tableDetails("ch-funnel")}</div>
+      <div class="panel chart-card"><h3>Offres actives par type de poste</h3><p>Offres principales, hors expirées</p><div class="chart-box"><canvas id="ch-role"></canvas></div>${tableDetails("ch-role")}</div>
+      <div class="panel chart-card"><h3>Offres actives par desk</h3><p>Une offre peut couvrir plusieurs desks</p><div class="chart-box"><canvas id="ch-desk"></canvas></div>${tableDetails("ch-desk")}</div>
+      <div class="panel chart-card"><h3>Offres actives par ville</h3><p>&nbsp;</p><div class="chart-box"><canvas id="ch-city"></canvas></div>${tableDetails("ch-city")}</div>
+      <div class="panel chart-card wide"><h3>Entreprises qui publient le plus</h3><p>Toutes les offres pertinentes détectées (15 premières)</p><div class="chart-box" style="height:340px"><canvas id="ch-company"></canvas></div>${tableDetails("ch-company")}</div>
+    </div>`;
+
+  const weeks = lastWeeks(12);
+  const wOff = weeks.map(w => rel.filter(o => weekKey(o.first_seen_at) === w).length);
+  const wApp = weeks.map(w => groups.filter(o => o.applied_at && weekKey(o.applied_at) === w).length);
+  const wLabels = weeks.map(w => new Date(w).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }));
+  barChart("ch-weeks", wLabels, [{ label: "Offres détectées", data: wOff, color: cssVar("--series-1") }, { label: "Candidatures", data: wApp, color: cssVar("--series-2") }]);
+
+  const stages = [["Offres pertinentes", groups.length], ["À postuler ou plus", groups.filter(o => o.status !== "Nouvelle" && o.status !== "Pas intéressé").length],
+    ["Postulées", applied.length], ["Réponse reçue", responded.length], ["Entretien", interviews.length], ["Offre reçue", groups.filter(o => o.status === "Offre reçue").length]];
+  const ramp = ["#86b6ef", "#6da7ec", "#5598e7", "#3987e5", "#2a78d6", "#1c5cab"];
+  barChart("ch-funnel", stages.map(s => s[0]), [{ label: "Offres", data: stages.map(s => s[1]), color: ramp }], true);
+  const one = (id, pairs, n = 10) => { const p = pairs.slice(0, n); barChart(id, p.map(x => x[0]), [{ label: "Offres", data: p.map(x => x[1]), color: cssVar("--series-1") }], true); };
+  one("ch-role", countBy(active, o => o.role_type || "Non précisé"));
+  one("ch-desk", countBy(active, o => o.desks?.length ? o.desks : "Non précisé"), 12);
+  one("ch-city", countBy(active, o => o.city || "Non précisée"));
+  one("ch-company", countBy(rel, o => o.company), 15);
+}
+function kpi(l, v, s) { return `<div class="panel kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`; }
+const chartTables = {};
+function tableDetails(id) { return `<details class="tbl"><summary>Voir les données</summary><div id="tbl-${id}"></div></details>`; }
+function barChart(id, labels, series, horizontal = false) {
+  const el = document.getElementById(id); if (!el) return;
+  const text2 = cssVar("--text-2"), grid = cssVar("--grid"), surface = cssVar("--surface");
+  const c = new Chart(el, {
+    type: "bar",
+    data: { labels, datasets: series.map(s => ({ label: s.label, data: s.data, backgroundColor: s.color, borderRadius: 4, borderSkipped: "start",
+                                                   borderColor: surface, borderWidth: 0, maxBarThickness: horizontal ? 22 : 26, categoryPercentage: .72, barPercentage: .9 })) },
+    options: {
+      indexAxis: horizontal ? "y" : "x", responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: cssVar("--text"), titleColor: cssVar("--bg"), bodyColor: cssVar("--bg"), padding: 9, cornerRadius: 8, displayColors: series.length > 1 } },
+      scales: {
+        x: { grid: { display: horizontal, color: grid, drawTicks: false }, border: { display: false }, ticks: { color: text2, precision: 0, font: { size: 11 } } },
+        y: { grid: { display: !horizontal, color: grid, drawTicks: false }, border: { display: false }, ticks: { color: text2, precision: 0, font: { size: 11.5 }, autoSkip: false } },
+      },
+    },
+  });
+  state.charts.push(c);
+  const t = document.getElementById("tbl-" + id);
+  if (t) t.innerHTML = `<table><tr><th></th>${series.map(s => `<th>${esc(s.label)}</th>`).join("")}</tr>${labels.map((l, i) => `<tr><td>${esc(l)}</td>${series.map(s => `<td>${s.data[i]}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+
+// ------------------------------------------------------------ sources
+function renderSources() {
+  const by = new Map();
+  for (const r of state.runs) { if (!by.has(r.source)) by.set(r.source, []); by.get(r.source).push(r); }
+  const rows = [...by.entries()].map(([src, rs]) => {
+    const last = rs[0], lastOk = rs.find(r => r.ok);
+    const n7 = rs.filter(r => daysAgo(r.finished_at) <= 7);
+    const found = state.offers.filter(o => o.is_primary && o.relevant !== false && (src.includes(o.company) || (src.startsWith("LinkedIn") && o.source === "LinkedIn"))).length;
+    return { src, last, lastOk, rate: n7.length ? Math.round(100 * n7.filter(r => r.ok).length / n7.length) : null, found };
+  }).sort((a, b) => (a.last.ok - b.last.ok) || a.src.localeCompare(b.src));
+  const lastRun = state.runs[0]?.finished_at;
+  const failing = rows.filter(r => !r.last.ok).length;
+  $("#view").innerHTML = `
+    <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      ${kpi("Dernier passage", lastRun ? fmtDT(lastRun) : "—", lastRun ? `il y a ${Math.max(0, Math.round((Date.now() - new Date(lastRun)) / 60000))} min` : "aucun passage enregistré")}
+      ${kpi("Sources en service", rows.length - failing + " / " + rows.length, failing ? `${failing} en erreur au dernier passage` : "toutes fonctionnent")}
+      ${kpi("Ajouts manuels en attente", state.inbox.filter(i => !i.processed).length, "traités au prochain passage")}
+    </div>
+    <div class="panel"><div class="table-wrap" style="max-height:none"><table class="grid">
+      <thead><tr><th class="nosort">Source</th><th class="nosort">État</th><th class="nosort">Dernier passage</th><th class="nosort">Dernier succès</th><th class="nosort">Fiabilité 7 j</th><th class="nosort">Dernière collecte</th><th class="nosort">Détail de l'erreur</th></tr></thead>
+      <tbody>${rows.map(r => `<tr style="cursor:default">
+        <td class="co">${esc(r.src)}</td>
+        <td>${r.last.ok ? '<span class="src-ok">✓ OK</span>' : '<span class="src-ko">✕ Erreur</span>'}</td>
+        <td class="nowrap">${fmtDT(r.last.finished_at)}</td>
+        <td class="nowrap">${r.lastOk ? fmtDT(r.lastOk.finished_at) : "jamais"}</td>
+        <td>${r.rate == null ? "—" : r.rate + " %"}</td>
+        <td class="nowrap muted">${r.last.ok ? `${r.last.fetched} lues · ${r.last.kept} stages · ${r.last.new} nouvelles` : "—"}</td>
+        <td class="muted" style="max-width:420px">${esc(r.last.error || "")}</td></tr>`).join("") ||
+        `<tr><td colspan="7"><div class="empty"><b>Aucun passage enregistré</b>Le moteur de veille ne s'est pas encore exécuté. Vérifie l'onglet « Actions » de GitHub.</div></td></tr>`}</tbody>
+    </table></div></div>
+    ${state.inbox.length ? `<div class="section-title">Ajouts manuels récents</div><div class="panel"><table class="grid"><thead><tr><th class="nosort">Ajouté le</th><th class="nosort">Entreprise</th><th class="nosort">Intitulé / texte</th><th class="nosort">Origine</th><th class="nosort">Résultat</th></tr></thead><tbody>
+      ${state.inbox.map(i => `<tr style="cursor:default"><td class="nowrap">${fmtDT(i.created_at)}</td><td class="co">${esc(i.company)}</td><td>${esc((i.title || i.text || "").slice(0, 110))}</td><td class="muted">${esc(i.origin || "")}</td><td>${i.processed ? esc(i.result || "Traité") : '<span class="muted">En attente</span>'}</td></tr>`).join("")}
+    </tbody></table></div>` : ""}`;
+}
+
+// ------------------------------------------------------------ démarrage
+async function refresh() {
+  try { await loadData(); } catch (e) { toast("Chargement impossible : " + (e.message || e)); }
+  render();
+}
+
+function renderLogin(msg) {
+  $("#app").innerHTML = `<div class="login"><div class="panel box">
+    <div class="brand"><div class="logo"><svg width="16" height="16" viewBox="0 0 32 32"><path d="M5 23l7-8 5 4 10-12" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+    <h1>Veille stages</h1><p>Connecte-toi avec le compte créé dans Supabase.</p>
+    <form id="login"><input class="inp" type="email" id="email" placeholder="E-mail" autocomplete="username" required>
+      <input class="inp" type="password" id="pwd" placeholder="Mot de passe" autocomplete="current-password" required>
+      <div class="err" id="lerr">${esc(msg || "")}</div><button class="btn primary" style="justify-content:center;padding:9px">Se connecter</button></form>
+    <p style="margin:16px 0 0"><a href="?demo=1">Voir la démo avec des données fictives</a></p>
+  </div></div>`;
+  $("#login").onsubmit = async e => {
+    e.preventDefault();
+    const { error } = await sb.auth.signInWithPassword({ email: $("#email").value, password: $("#pwd").value });
+    if (error) { $("#lerr").textContent = "Connexion refusée : vérifie l'e-mail et le mot de passe."; return; }
+    start();
+  };
+}
+
+async function start() {
+  const th = lsGet("vs-theme", null); if (th) document.documentElement.dataset.theme = th;
+  if (!DEMO) {
+    sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return renderLogin();
+  }
+  state.tab = lsGet("vs-tab", "offers");
+  for (const v of ["offers", "dups"]) state.filters[v] = { ...freshFilters(), ...lsGet("vs-filters-" + v, {}) };
+  state.sort = { ...state.sort, ...lsGet("vs-sort", {}) };
+  state.lastVisit = lsGet("vs-last-visit", null) || (DEMO ? new Date(Date.now() - 36 * 3600e3).toISOString() : null);
+  // La "dernière visite" est mise à jour 1 min après l'ouverture, pour garder les badges "Nouveau" pendant la consultation
+  setTimeout(() => lsSet("vs-last-visit", new Date().toISOString()), 60000);
+  renderShell();
+  $("#view").innerHTML = `<div class="empty">Chargement…</div>`;
+  await refresh();
+  setInterval(() => { if (!document.querySelector(".drawer, .modal-bg, .ms-pop")) refresh(); }, 5 * 60000);
+}
+
+// ------------------------------------------------------------ données de démonstration
+function demoData() {
+  const now = Date.now(), H = 3600e3, D = 24 * H;
+  const iso = t => new Date(t).toISOString();
+  let n = 0; const id = () => "demo-" + (++n);
+  const offers = [], history = [];
+  const mk = (company, cat, title, role, desks, city, sm, sy, fit, ageH, src, extra = {}) => {
+    const o = { id: id(), company, company_category: cat, title, role_type: role, desks, city, location: city, start_month: sm, start_year: sy,
+      duration_months: 6, period_fit: fit, period_label: sm ? `Début ${String(sm).padStart(2, "0")}/${sy}` : "Date de début non précisée",
+      first_seen_at: iso(now - ageH * H), posted_at: iso(now - ageH * H - 6 * H), last_seen_at: iso(now - H), source: src,
+      url: "https://example.org/offre", apply_url: "https://example.org/postuler", active: true, relevant: true, is_primary: true,
+      status: "Nouvelle", favorite: false, manual: false,
+      description: "Données fictives de démonstration. Au sein de la salle des marchés, le ou la stagiaire assistera l'équipe dans le pricing, le suivi des positions et la préparation d'analyses de marché. Stage de fin d'études de 6 mois.", ...extra };
+    o.group_id = o.id; offers.push(o); return o;
+  };
+  const dup = (p, src, title, ageH, reason) => offers.push({ ...p, id: id(), is_primary: false, source: src, title: title || p.title, first_seen_at: iso(now - ageH * H), dup_reason: reason || `Déjà vue sur ${p.source}`, badge: null });
+  const setS = (o, s, ago) => { o.status = s; o.status_updated_at = iso(now - ago * D); if (APPLIED.has(s)) o.applied_at = o.applied_at || iso(now - (ago + 3) * D); history.push({ group_id: o.group_id, status: s, changed_at: iso(now - ago * D) }); };
+  const BF = "Banques Françaises", BA = "Banques Américaines", BE = "Banques Européennes", GA = "Globales & Autres", PT = "Prop Trading & Quants", CE = "Commodities & Energy";
+  const a = mk("BNP Paribas CIB", BF, "Stage - Sales Rates & Inflation - Juillet 2027 (H/F)", "Sales", ["Rates"], "Paris", 7, 2027, "OK", 3, "Site officiel");
+  dup(a, "LinkedIn", "Stage Sales Rates & Inflation (Juillet 2027) H/F", 2);
+  const b = mk("Société Générale CIB", BF, "Stage - Assistant Trader Equity Derivatives Flow - Mai 2027", "Trading", ["Equity Derivatives"], "Paris", 5, 2027, "OK", 20, "LinkedIn", { favorite: true });
+  setS(b, "À postuler", 0.5);
+  const c = mk("Crédit Agricole CIB (CACIB)", BF, "Stage Market Risk - Fixed Income - 6 mois - Juin 2027", "Risk", ["Fixed Income (général)"], "Paris", 6, 2027, "OK", 46, "LinkedIn");
+  setS(c, "Postulée", 12); setS(c, "Test en ligne", 8);
+  const d = mk("Natixis CIB", BF, "Stage - Structuration Produits Structurés Actions - Juillet 2027", "Structuring", ["Equity Derivatives", "Structured Products"], "Paris", 7, 2027, "OK", 70, "LinkedIn");
+  setS(d, "Postulée", 9); setS(d, "Entretien", 4);
+  mk("HSBC Continental Europe", BF, "Stage - Assistant Trader desk Cash & Liquidité", "Trading", ["Money Markets / Trésorerie"], "Paris", 1, 2027, "Incompatible", 30, "LinkedIn");
+  const e = mk("Citi (Citigroup)", BA, "Markets – Sales and Trading, Off-Cycle Internship, Paris – France, 2027", "Sales & Trading", [], "Paris", 1, 2027, "Incompatible", 18 * 24, "Site officiel");
+  dup(e, "LinkedIn", null, 17 * 24);
+  const f = mk("J.P. Morgan", BA, "2027 Markets Off-Cycle Internship Program - Paris (Mai)", "Markets (général)", [], "Paris", 5, 2027, "OK", 9, "Site officiel", { favorite: true });
+  dup(f, "LinkedIn", "2027 Markets Off-Cycle Internship - Paris", 7);
+  const g = mk("Morgan Stanley", BA, "2027 Off-Cycle Internship - Fixed Income Division - London", "Markets (général)", ["Fixed Income (général)"], "Londres", null, 2027, "À vérifier", 5 * 24, "Site officiel");
+  setS(g, "Postulée", 4);
+  const h = mk("Goldman Sachs", BA, "2027 Global Banking & Markets Off-Cycle Internship - Paris", "Markets (général)", [], "Paris", null, 2027, "À vérifier", 26, "LinkedIn");
+  const i = mk("Barclays CIB", BE, "Capital Markets Off Cycle Internship Programme 2027 Paris", "Markets (général)", [], "Paris", null, 2027, "À vérifier", 8 * 24, "LinkedIn");
+  setS(i, "Postulée", 6); setS(i, "Refusée", 1);
+  mk("UBS", BE, "Off-Cycle Internship - FX Sales, Zurich (June 2027)", "Sales", ["FX"], "Zurich", 6, 2027, "OK", 52, "LinkedIn");
+  const j = mk("Deutsche Bank", BE, "Middle Office Internship - Rates & Credit (July 2027)", "Middle Office", ["Rates", "Credit"], "Londres", 7, 2027, "OK", 4 * 24, "LinkedIn");
+  setS(j, "Postulée", 2);
+  mk("Nomura", GA, "Off-cycle Intern - Equity Derivatives Trading Assistant", "Trading", ["Equity Derivatives"], "Londres", 9, 2027, "Incompatible", 10 * 24, "LinkedIn");
+  mk("RBC Capital Markets", GA, "Summer 2027 Analyst - Global Markets (Montreal)", "Markets (général)", [], "Montréal", 6, 2027, "Incompatible", 15 * 24, "Site officiel", { duration_months: 2 });
+  const k = mk("Exane", BF, "Stage Sales Cash Equities - Mai 2027", "Sales", ["Cash Equities"], "Paris", 5, 2027, "OK", 22 * 24, "LinkedIn", { badge: "Repost", badge_at: iso(now - 10 * H) });
+  dup(k, "LinkedIn", "Stage Sales Cash Equities - Mai 2027", 40 * 24, "Version précédente");
+  mk("Kepler Cheuvreux", BF, "Stage - Middle Office Actions - 6 mois - Juin 2027", "Middle Office", ["Cash Equities"], "Paris", 6, 2027, "OK", 33 * 24, "LinkedIn", { active: false });
+  mk("ODDO BHF", BF, "Stage Assistant Sales Fixed Income - Juin 2027", "Sales", ["Fixed Income (général)"], "Paris", 6, 2027, "OK", 13 * 24, "LinkedIn", { badge: "Mise à jour", badge_at: iso(now - 30 * H) });
+  mk("Optiver", PT, "Trading Intern - Amsterdam (Off-cycle 2027)", "Trading", [], "Amsterdam", null, 2027, "À vérifier", 6 * 24, "LinkedIn");
+  mk("TotalEnergies Trading (TOTSSA)", CE, "Stage - Assistant Trader Gas & Power - Genève - Juillet 2027", "Trading", ["Commodities"], "Genève", 7, 2027, "OK", 27 * 24, "LinkedIn");
+  const l = mk("Crédit Agricole CACEIS", "Autres (hors liste)", "Stage - Assistant(e) Sales Front Office - Securities Finance et Repo H/F", "Sales", ["Securities Finance / Repo"], "Paris", null, null, "À vérifier", 25, "LinkedIn", { company_listed: false });
+  mk("Danone", "Autres (hors liste)", "Stage Chef de produit Marketing", null, [], "Paris", null, null, "À vérifier", 25, "LinkedIn", { relevant: false, filter_reason: "Entreprise hors liste" });
+  const m = mk("Société Générale CIB", BF, "Stage Sales Credit - post LinkedIn d'un stagiaire", "Sales", ["Credit"], "Paris", 7, 2027, "OK", 60, "Ajout manuel", { manual: true });
+  setS(m, "Postulée", 2);
+  // semaines passées : historique pour les statistiques
+  const titles = ["Stage Sales FX", "Stage Trading Rates", "Stage Risk XVA", "Stage Middle Office Credit", "Off-cycle Markets", "Stage Structuring Rates"];
+  const comps = [["BNP Paribas CIB", BF], ["Natixis CIB", BF], ["Société Générale CIB", BF], ["Barclays CIB", BE], ["J.P. Morgan", BA], ["HSBC Continental Europe", BF], ["UBS", BE]];
+  for (let w = 2; w < 12; w++) for (let q = 0; q < (w % 3) + 1; q++) {
+    const [co, cat] = comps[(w + q) % comps.length], t = titles[(w * 2 + q) % titles.length];
+    const o = mk(co, cat, `${t} - 2027`, ["Sales", "Trading", "Risk", "Middle Office", "Markets (général)", "Structuring"][(w * 2 + q) % 6],
+      [["FX"], ["Rates"], ["XVA / Counterparty"], ["Credit"], [], ["Rates"]][(w * 2 + q) % 6], ["Paris", "Londres", "Paris", "Luxembourg"][q % 4], 6, 2027, "OK", w * 7 * 24 + q * 30, "LinkedIn",
+      { active: w < 6 });
+    if (q === 0 && w > 3) { setS(o, "Postulée", w * 7 - 3); if (w % 2) setS(o, w % 4 === 1 ? "Entretien" : "Refusée", w * 7 - 12); }
+  }
+  const runs = [];
+  const srcs = ["Workday · Citi (Citigroup)", "Workday · Morgan Stanley", "Oracle · J.P. Morgan", "Site BNP Paribas", "LinkedIn (offres publiques)", "Greenhouse · Jane Street", "Greenhouse · IMC", "SmartRecruiters · Vitol"];
+  for (const s of srcs) for (let r = 0; r < 6; r++) runs.push({ source: s, ok: !(s.includes("Vitol") && r === 0), fetched: 40 + r, kept: 6, new: r === 0 ? 1 : 0, finished_at: iso(now - (r * 30 + 12) * 60e3), error: s.includes("Vitol") && r === 0 ? "FetchError: HTTP 503 sur https://api.smartrecruiters.com/v1/companies/vitol/postings" : null });
+  runs.sort((x, y) => y.finished_at.localeCompare(x.finished_at));
+  const inbox = [{ company: "Société Générale CIB", title: "Stage Sales Credit", origin: "Post LinkedIn", created_at: iso(now - 61 * H), processed: true, result: "Ajoutée" }];
+  return { offers, history, runs, inbox };
+}
+
+start();
+</script>
+</body>
+</html>
