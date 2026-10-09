@@ -8,6 +8,6 @@
 //  passe, la base ne renvoie rien (règles de sécurité "RLS").
 // =====================================================================
 window.VEILLE_CONFIG = {
-  supabaseUrl: "https://abcdefgh.supabase.co",
-  supabaseAnonKey: "sb_publishable_xxxxxxxx",
+  supabaseUrl: "https://ketnoftgdjbwolzeqefy.supabase.co",
+  supabaseAnonKey: "sb_publishable_ycPbf-VN9ejIOTEgLda02Q_9gcbqg2Z",
 };
