@@ -41,6 +41,7 @@ class Ctx:
         self.stats = {}
         self.detail_budget = 0
         self.recheck_budget = 15
+        self.resumed = False  # reprise après une pause : pas de faux "Repost"
 
     # -------------------------------------------------------------- écriture
     def insert(self, row: dict) -> dict:
@@ -206,6 +207,9 @@ def connector_of(o: dict) -> str | None:
 def handle_known(o: dict, item: dict, ctx: Ctx, connector: str) -> None:
     ctx.seen_ids.add(o["id"])
     gap = D.days_between(o.get("last_seen_at"), ctx.now)
+    if ctx.resumed and (gap > ctx.dd["jours_absence_repost"] or o.get("active") is False):
+        ctx.patch(o, {"active": True, "last_seen_at": now_iso()})  # toujours en ligne après la pause
+        return
     if o.get("relevant") and (gap > ctx.dd["jours_absence_repost"] or o.get("active") is False):
         ctx.patch(o, {"badge": "Repost", "badge_at": now_iso(), "active": True, "last_seen_at": now_iso()})
         ctx.promote(o)
@@ -262,7 +266,8 @@ def ingest_row(row: dict, ctx: Ctx) -> dict:
     last_seen = max((o.get("last_seen_at") or "") for o in group)
     row.update({"group_id": gid, "status": primary.get("status") or "Nouvelle", "notes": primary.get("notes")})
     sim = D.description_similarity(row.get("description"), primary.get("description"))
-    if D.days_between(last_seen, ctx.now) > ctx.dd["jours_absence_repost"] or not any(o.get("active") for o in group):
+    if not ctx.resumed and (D.days_between(last_seen, ctx.now) > ctx.dd["jours_absence_repost"]
+                            or not any(o.get("active") for o in group)):
         row.update({"is_primary": False, "badge": "Repost", "badge_at": now_iso()})
         row = ctx.insert(row)
         ctx.promote(row)
@@ -309,6 +314,11 @@ def due(name: str, every_min: int, last: dict, ctx: Ctx, force: bool) -> bool:
 def run_sources(ctx: Ctx, only: str | None, force: bool) -> list[dict]:
     S = ctx.conf["sources"]
     last = {} if ctx.dry else ctx.store.last_runs()
+    if last:
+        pause = D.days_between(max(last.values()), ctx.now)
+        if pause > 2:
+            ctx.resumed = True
+            print(f"Reprise après {pause:.0f} jours de pause : les offres déjà connues ne seront pas signalées comme reposts.")
     jobs = []  # (nom du run, connecteur, fonction de collecte, budget de détails)
     if S.get("workday", {}).get("actif"):
         for site in S["workday"]["sites"]:
